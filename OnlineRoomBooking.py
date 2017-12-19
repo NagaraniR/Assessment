@@ -241,21 +241,21 @@ Press two to login \n"""))
                     result = cur.fetchone()
                     available_hotel = result[0]
                 else:
-                    available_hotel = Bridgewood_amount
+                    available_hotel = "Bridgewood"
             elif Bridgewood_amount < Lakewood_amount or Ridgewood_amount < Lakewood_amount:
                 query = "select hotelName from price_details where ratings = (select max(ratings) from price_details where hotelName in ('Lakewood','Bridgewood'))"
                 cur.execute(str(query))
                 result = cur.fetchone()
                 available_hotel = result[0]
             else:
-                print Lakewood_amount
+                available_hotel = "Lakewood"
         elif  Lakewood_amount <  Ridgewood_amount or  Bridgewood_amount <  Ridgewood_amount:
             query = "select hotelName from price_details where ratings = (select max(ratings) from price_details where hotelName in ('Lakewood','Bridgewood'))"
             cur.execute(str(query))
             result = cur.fetchone()
             available_hotel = result[0]
         else:
-            available_hotel = Ridgewood_amount
+            available_hotel = "Ridgewood"
         return available_hotel
         
     def reserve(self):
