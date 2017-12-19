@@ -230,6 +230,7 @@ Press two to login \n"""))
             available_hotel = page.get_available_room(Lakewood_amount,Bridgewood_amount,Ridgewood_amount)
         print "The cheepest price hotel is: \n" ,available_hotel    
         page.reserve()
+        return available_hotel
 
     def get_available_room(self,Lakewood_amount,Bridgewood_amount,Ridgewood_amount):
         if Lakewood_amount != Bridgewood_amount:
@@ -240,33 +241,85 @@ Press two to login \n"""))
                     result = cur.fetchone()
                     available_hotel = result[0]
                 else:
-                    available_hotel = "Bridgewood"
+                    available_hotel = Bridgewood_amount
             elif Bridgewood_amount < Lakewood_amount or Ridgewood_amount < Lakewood_amount:
                 query = "select hotelName from price_details where ratings = (select max(ratings) from price_details where hotelName in ('Lakewood','Bridgewood'))"
                 cur.execute(str(query))
                 result = cur.fetchone()
                 available_hotel = result[0]
             else:
-                available_hotel = "Lakewood"
+                print Lakewood_amount
         elif  Lakewood_amount <  Ridgewood_amount or  Bridgewood_amount <  Ridgewood_amount:
             query = "select hotelName from price_details where ratings = (select max(ratings) from price_details where hotelName in ('Lakewood','Bridgewood'))"
             cur.execute(str(query))
             result = cur.fetchone()
             available_hotel = result[0]
         else:
-            available_hotel = "Ridgewood"
+            available_hotel = Ridgewood_amount
         return available_hotel
         
     def reserve(self):
         key = int(raw_input("Press 1 to book \nPress 2 to exit \n"))
         if key == 1:
-            print "Room reserved successfully"
+            print "Room reserved successfully"    
         elif key == 2:
             sys.exit()
         else:
             print "The enterd key is not valid"
-        
-           
+    
+    def update_lakewood(self, user_mail, Lakewood_reg_customer, Lakewood_reward_customer):
+        try:
+            if Lakewood_reward_customer is not None:
+                cur.execute("update Lakewood_reward_customers as a inner join( select no_discount+1 as des from Lakewood_reward_customers where emailid='"+ user_mail +"') as b set a.no_discount= b.des where a.emailid='"+ user_mail +"'")
+                con.commit()
+            if Lakewood_reg_customer is not None:
+                cur.execute(str("select cusName,no_visits from Lakewood_reg_customers where emailid='"+ user_mail +"'"))
+                result = cur.fetchone()
+                if result[1] <=9:
+                    cur.execute("update Lakewood_reg_customers as a inner join( select no_visits+1 as des from Lakewood_reg_customers where emailid='"+ user_mail +"') as b set a.no_visits= b.des where a.emailid='"+ user_mail +"'")
+                    con.commit()
+                elif result[1] == 10:
+                    cur.execute("delete from Lakewood_reg_customers where emailid='"+ user_mail +"'")            
+                    cur.execute("insert into Lakewood_reward_customers values(%s,%s,%s)",(result[0],user_mail,0))
+                    con.commit()
+        except Exception as exception:
+            print exception
+
+    def update_Bridgewood(self, user_mail, Bridgewood_reward_customer, Bridgewood_reg_customer):       
+        try:
+            if Bridgewood_reward_customer is not None:
+                cur.execute("update Bridgewood_reward_customers as a inner join( select no_discount+1 as des from Bridgewood_reward_customers where emailid='"+ user_mail +"') as b set a.no_discount= b.des where a.emailid='"+ user_mail +"'")
+                con.commit()
+            if Bridgewood_reg_customer is not None:
+                cur.execute(str("select cusName,no_visits from Bridgewood_reg_customers where emailid='"+ user_mail +"'"))
+                result = cur.fetchone()
+                if result[1] <=9:
+                    cur.execute("update Bridgewood_reg_customers as a inner join( select no_visits+1 as des from Bridgewood_reg_customers where emailid='"+ user_mail +"') as b set a.no_visits= b.des where a.emailid='"+ user_mail +"'")
+                elif result[1] == 10:
+                    cur.execute("delete from Bridgewood_reg_customers where emailid='"+ user_mail +"'")            
+                    cur.execute("insert into Bridgewood_reward_customers values(%s,%s,%s)",(result[0],user_mail,0))
+                con.commit()
+        except Exception as exception:
+            print exception
+  
+    def update_Ridgewood(self, user_mail, Ridgewood_reg_customer,Ridgewood_reward_customer):
+        try:
+            if Ridgewood_reward_customer is not None:
+                cur.execute("update Ridgewood_reward_customers as a inner join( select no_discount+1 as des from Ridgewood_reward_customers where emailid='"+ user_mail +"') as b set a.no_discount= b.des where a.emailid='"+ user_mail +"'")
+                con.commit()
+            if Ridgewood_reg_customer is not None:
+                cur.execute(str("select cusName,no_visits from Ridgewood_reg_customers where emailid='"+ user_mail +"'"))
+                result = cur.fetchone()
+                if result[1] <=9:
+                    cur.execute("update Ridgewood_reg_customers as a inner join( select no_visits+1 as des from Ridgewood_reg_customers where emailid='"+ user_mail +"') as b set a.no_visits= b.des where a.emailid='"+ user_mail +"'")
+                elif result[1] == 10:
+                    cur.execute("delete from Ridgewood_reg_customers where emailid='"+ user_mail +"'")            
+                    cur.execute("insert into Ridgewood_reward_customers values(%s,%s,%s)",(result[0],user_mail,0))
+            con.commit()
+        except Exception as exception:
+            print exception
+            
+
 page=NagaWebPage()
 con,cur=page.db_connection()
 user_mail,user_dates=page.login_page(con,cur)
@@ -278,4 +331,13 @@ Ridgewood_reg_customer,Ridgewood_reward_customer=page.check_customer_inRidgewood
 Lakewood_amount=page.get_Lakewood_customer_amount(Lakewood_reg_customer, Lakewood_reward_customer,user_week_days,user_week_ends)
 Bridgewood_amount=page.get_Bridgewood_customer_amount(Bridgewood_reward_customer, Bridgewood_reg_customer,user_week_days,user_week_ends)
 Ridgewood_amount=page.get_Ridgewood_customer_amount(Ridgewood_reg_customer,Ridgewood_reward_customer,user_week_days,user_week_ends)
-page.check_cheepest_room(Lakewood_amount,Bridgewood_amount,Ridgewood_amount)
+available_hotel = page.check_cheepest_room(Lakewood_amount,Bridgewood_amount,Ridgewood_amount)
+print "asd",available_hotel
+if available_hotel == "Lakewood":
+    page.update_lakewood(user_mail, Lakewood_reg_customer, Lakewood_reward_customer)
+elif available_hotel == "Bridgewood":
+    page.update_Bridgewood(user_mail, Bridgewood_reward_customer, Bridgewood_reg_customer)
+elif available_hotel == "Ridgewood":
+    page.update_Ridgewood(user_mail, Ridgewood_reg_customer,Ridgewood_reward_customer)
+else:
+    print "Nothing"
