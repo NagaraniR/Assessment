@@ -1,27 +1,31 @@
-from hotelModel import Hotel
-from customerModel import Customer
+from hotel import Hotel
+from customer import Customer
 import datetime
 import calendar
 import operator
 
-class Controller(Hotel):
+class Controller():
+
     def __init__(self):
-        self.customers_details = {}
-        self.hotels_details = {}
+        self.customers_details = []
+        self.hotels_details = []
 
     def user_input(self):
         user_dates = []
         username = raw_input("Enter username")
-        if username in self.customers_details:
-            days_to_stay=int(raw_input("How many days you want to stay \n"))
-            for i in range(0,days_to_stay):
-                user_date=raw_input("Enter date in the format dd/mm/yy")
-                user_dates.append(user_date)
+        for cutomer in self.customers_details:
+            if username == cutomer.name:
+                days_to_stay=int(raw_input("How many days you want to stay \n"))
+                for i in range(0,days_to_stay):
+                    user_date=raw_input("Enter date in the format dd/mm/yy")
+                    user_dates.append(user_date)
+                break    
         else:
             print "Sorry the entered user name is not valid, enter valid"
         return username, user_dates
 
     def convert_dates_to_days(self,user_dates):
+        result = True
         try:
             user_booking_days=[]
             for index in range(0,len(user_dates)):
@@ -30,10 +34,11 @@ class Controller(Hotel):
                 day=user_date.strftime("%A")
                 user_booking_days.append(day)
         except Exception as exception:
+            result = False
             print exception
             username, user_dates = controller.user_input()
             user_booking_days = controller.convert_dates_to_days(user_dates)    
-        return user_booking_days
+        return result, user_booking_days
     
     def seperate_days(self, user_booking_days):
         week_days=[]
@@ -53,52 +58,58 @@ class Controller(Hotel):
         return  week_days, week_ends
     
     def get_customer_type(self, user_name):
-        customer_type = self.customers_details[user_name]
+        for customer in self.customers_details:
+            if customer.name == user_name:
+                customer_type = customer.cutomer_type
         return customer_type
 
-    def get_each_hotel_rate(self, customer_type, week_days, week_ends):
-        hotels_rate = controller.each_hotel_rate(customer_type, week_days, week_ends)
-        return hotels_rate
+    def get_hotels_rate(self, customer_type, week_days, week_ends):
+        for hotel_details in self.hotels_details:
+            hotel_details.get_hotel_rate(customer_type,week_days, week_ends)
 
-    def display(self, hotels_rate):
-        available_hotel = controller.cheepest_hotel(hotels_rate)
-        print "The available hotel is \n", available_hotel
-        return available_hotel
-    
-
+    #import pdb;pdb.set_trace()
+    def cheepest_hotel(self):
+        cheepest_hotel = ""
+        cheepest_rate = self.hotels_details[0].hotel_rate
+        for hotels_detail in self.hotels_details:
+            if hotels_detail.hotel_rate < cheepest_rate:
+                cheepest_rate = hotels_detail.hotel_rate
+                cheepest_hotel = hotels_detail.name
+            else:
+                cheepest_hotel = self.hotels_details[0].name
+        print "Available hotel is ", cheepest_hotel
+        return cheepest_hotel
+            
 if __name__ == "__main__":
     controller = Controller()
+    
     customer1 = Customer("Naga", "Regular")
-    controller.customers_details[customer1.name] = customer1.cutomer_type
+    controller.customers_details.append(customer1)
     customer2 = Customer("Rani", "Reward")
-    controller.customers_details[customer2.name] = customer2.cutomer_type
+    controller.customers_details.append(customer2)
     customer3 = Customer("Raja", "Regular")
-    controller.customers_details[customer3.name] = customer3.cutomer_type
+    controller.customers_details.append(customer3)
     customer4 = Customer("raveena", "Reward")
-    controller.customers_details[customer4.name] = customer4.cutomer_type
+    controller.customers_details.append(customer4)
     customer5 = Customer("Nithya", "Regular")
-    controller.customers_details[customer5.name] = customer5.cutomer_type
-
-    Lakewood = Hotel("Lakewood")
-    Lakewood.add_room_details(4,3)
+    controller.customers_details.append(customer5)
+    
+    Lakewood = Hotel("Lakewood", 3)
     Lakewood.add_price_details(110, 90, 80, 80)
-    controller.hotels_details[Lakewood.name] = dict(Lakewood.room_details.items() + Lakewood.price_details.items())
+    controller.hotels_details.append(Lakewood)
 
-
-    Bridgewood = Hotel("Bridgewood")
-    Bridgewood.add_room_details(2, 4)
+    Bridgewood = Hotel("Bridgewood", 4)
     Bridgewood.add_price_details(160, 60, 110, 50)
-    controller.hotels_details[Bridgewood.name] = dict(Bridgewood.room_details.items() + Bridgewood.price_details.items())
+    controller.hotels_details.append(Bridgewood)
 
-    Ridgewood = Hotel("Ridgewood")
-    Ridgewood.add_room_details(5, 5)
+    Ridgewood = Hotel("Ridgewood", 5)
     Ridgewood.add_price_details(220, 150, 110, 40)
-    controller.hotels_details[Ridgewood.name] = dict(Ridgewood.room_details.items() + Ridgewood.price_details.items())
+    controller.hotels_details.append(Ridgewood)
 
     username, user_dates = controller.user_input()
-    user_booking_days = controller.convert_dates_to_days(user_dates)
+    result, user_booking_days = controller.convert_dates_to_days(user_dates)
     week_days, week_ends = controller.seperate_days(user_booking_days)
     customer_type = controller.get_customer_type(username)
     
-    hotels_rate = controller.get_each_hotel_rate(customer_type, week_days, week_ends)
-    controller.display(hotels_rate)
+    hotels_rate = controller.get_hotels_rate(customer_type, week_days, week_ends)
+    controller.cheepest_hotel()
